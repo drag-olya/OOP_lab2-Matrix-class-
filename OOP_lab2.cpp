@@ -222,7 +222,7 @@ public:
         cout << endl;
         ///////////////////
 
-        cout << test1 * test2 << endl;
+        cout << test1 * test2;
 
 
         //Matrix a, b;
