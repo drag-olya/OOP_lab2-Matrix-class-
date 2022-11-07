@@ -1,8 +1,11 @@
 // Created by Olha Drahomeretska, group k-23
 //
 
+#define _USE_MATH_DEFINES
+
 #include <iostream>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 
@@ -210,7 +213,9 @@ public:
     vector<float> calc_res(Matrix m);
 
 
-    vector<float> GaussianElimination(Matrix m) { // розширена матриц€ n*n+1
+// a. метод √ауса розвТ€занн€ —Ћј–
+
+    vector<float> GaussianElimination(Matrix m) { // m - розширена матриц€ n*n+1
 
         vector<float> res;
 
@@ -238,76 +243,182 @@ public:
     }
 
 
-    // зведенн€ до р€дковоњ ступ≥нчастоњ форми (Row echelon form)
-    Matrix REF(Matrix m) {
+// зведенн€ до р€дковоњ ступ≥нчастоњ форми (Row echelon form)
+Matrix REF(Matrix m) {
 
-        for (int i = 0; i < m.n; i++)
+    for (int i = 0; i < m.n; i++)
+    {
+        // знаходимо найб≥льший за модулем у стовпц≥ ≥
+
+        int i_max = i;
+        float v_max = m[i_max][i];
+
+        for (int k = i + 1; k < m.n; k++)
         {
-            // знаходимо найб≥льший за модулем у стовпц≥ ≥
+            if (abs(m[k][i]) > v_max) {
+                v_max = m[k][i];
+                i_max = k;
+            }
+        }
 
-            int i_max = i;
-            float v_max = m[i_max][i];
+        if (not m[i][i_max]) {
 
-            for (int k = i+1; k < m.n; k++)
+            return m; // вироджена матриц€ (singular matrix)
+        }
+
+        // р€док з визначеним найб≥льшим значенн€м стаЇ поточним
+        if (i_max != i) {
+            swap_rows(m, i, i_max);
+        }
+
+        // в≥д нижн≥х р€дк≥в в≥дн≥маЇмо ведучий домножений на коеф≥ц≥Їнт x
+        for (int k = i + 1; k < m.n; k++)
+        {
+
+            float x = m[k][i] / m[i][i];
+
+            for (int j = i + 1; j < m.m; j++)
             {
-                if (abs(m[k][i]) > v_max) {
-                    v_max = m[k][i];
-                    i_max = k;
+                m.elements[k * m.m + j] = m[k][j] - m[i][j] * x;
+
+            }
+
+            // елементи п≥д головною д≥агоналлю заповнюЇмо нул€ми
+            m.elements[k * m.m + i] = 0;
+        }
+        //cout << m; //  test
+    }
+    //cout << endl << m; // test
+
+    return m;
+}
+
+
+vector<float> calc_res(Matrix m) {
+
+    vector<float> res;
+    res.resize(m.n);
+
+    for (int i = m.n - 1; i > -1; i--)
+    {
+        res[i] = m[i][m.m - 1];
+
+        for (int j = i + 1; j < m.n; j++)
+        {
+            res[i] -= res[j] * m[i][j];
+        }
+
+        res[i] /= m[i][i];
+    }
+
+    return res;
+}
+
+
+// b.ћетод якоб≥ дл€ знаходженн€ власних значень матриц≥ (метод обертанн€ якоб≥)
+
+float max_j_offdiag_in_row_i(Matrix m, int i) {
+
+    float j_max = i + 1;
+    float v_max = m[i][j_max];
+
+    for (int j = i + 2; j < m.n; j++) {
+
+        if (m[i][j] > v_max) {
+            j_max = j;
+            v_max = m[i][j];
+        }
+    }
+    return j_max;
+}
+
+
+vector<float> JacobiEigenvalueAlgorithm(Matrix A) { // m - симетрична матриц€ n*n
+
+    for (int i = 0; i < A.n - 1; i++)
+    {
+        float j_max = max_j_offdiag_in_row_i(A, i);
+
+        while (abs(A[i][j_max]) > 0.1) {
+
+            j_max = max_j_offdiag_in_row_i(A, i);
+
+            float teta;
+
+            if (A[i][i] - A[j_max][j_max]) {
+
+                teta = 0.5 * atan(2 * A[i][j_max] / (A[i][i] - A[j_max][j_max]));
+
+            }
+            else {
+                teta = M_PI / 4;
+            }
+
+            Matrix J = J.set_size(J, A.n, A.m);
+
+            // заповнюЇмо матриц€ обертанн€ (якоб≥)
+            for (int J_i = 0; J_i < J.n; J_i++)
+            {
+                for (int J_j = 0; J_j < J.m; J_j++) {
+
+                    // заповнюЇмо д≥агональ
+                    if (J_i == J_j) {
+                        if (J_i == i or J_i == j_max) {
+
+                            J.elements[J_i * J.m + J_j] = cos(teta);
+                        }
+                        else {
+                            J.elements[J_i * J.m + J_j] = 1;
+                        }
+                    }
+
+                    else if (J_i == i and J_j == j_max) {
+                        J.elements[J_i * J.m + J_j] = sin(teta);
+                    }
+                    else if (J_i == j_max and J_j == i) {
+                        J.elements[J_i * J.m + J_j] = -sin(teta);
+                    }
+                    else {
+                        J.elements[J_i * J.m + J_j] = 0;
+                    }
                 }
             }
 
-            if (not m[i][i_max]) {
-                
-                return m; // вироджена матриц€ (singular matrix)
-            }
+            A = ~J * A * J;
 
-            // р€док з визначеним найб≥льшим значенн€м стаЇ поточним
-            if (i_max != i) {
-                swap_rows(m, i, i_max);
-            }
+        } 
 
-            // в≥д нижн≥х р€дк≥в в≥дн≥маЇмо ведучий домножений на коеф≥ц≥Їнт x
-            for (int k = i+1; k < m.n; k++)
-            {
-
-                float x = m[k][i] / m[i][i];
-
-                for (int j = i + 1; j < m.m; j++)
-                {
-                    m.elements[k * m.m + j] = m[k][j] - m[i][j] * x;
-                    
-                }
-
-                // елементи п≥д головною д≥агоналлю заповнюЇмо нул€ми
-                m.elements[k * m.m + i] = 0;
-            }
-            //cout << m; //  test
         }
-        //cout << endl << m; // test
 
-        return m;
+    cout << endl << A;
+
+    vector<float> res;
+    res.resize(A.n);
+    for (int i = 0; i < A.n; i++)
+    {
+        res[i] = A[i][i];
+    }
+
+    return res;
+
     }
 
 
-    vector<float> calc_res(Matrix m) {
+Matrix rand_sym_matr(int n) {
 
-        vector<float> res;
-        res.resize(m.n);
+    Matrix test_M = test_M.set_size(test_M, n, n);
 
-        for (int i = m.n - 1; i > -1; i--)
-        {
-            res[i] = m[i][m.m - 1];
+    srand(time(0));
 
-            for (int j = i+1; j < m.n; j++)
-            {
-                res[i] -= res[j] * m[i][j];
-            }
-
-            res[i] /= m[i][i];
+    for (int i = 0; i < test_M.n; i++) {
+        for (int j = i; j < test_M.m; j++) {
+            test_M.elements[i * test_M.m + j] = test_M.elements[j * test_M.m + i] = (float)rand()/1000;
         }
-
-        return res;
     }
+
+    return test_M;
+}
+
 
 
     int main()
@@ -353,19 +464,39 @@ public:
         //
 
 
-        Matrix a, b;
+        //test for JacobiEigenvalueAlgorithm()
+        Matrix a = a.set_size(a, 3, 3);
+        a.elements = { 7, 5, 2, 5, 1, 0, 2, 0, 3 };
 
-        cin >> a;
-        cin >> b;
+        float sq2 = sqrt(2);
+        //a.elements = { 1, sq2, 2, sq2, 3, sq2, 2, sq2, 1};
 
-        cout << a;
-        cout << endl << b;
-        cout << endl;
+        Matrix test_Jac = rand_sym_matr(3);
+        cout << test_Jac;
+
+        vector<float> test_jac = JacobiEigenvalueAlgorithm(test_Jac);
+        for (int i = 0; i < a.n; i++)
+        {
+            cout << "e" << i << " = " << test_jac[i] << endl;
+        }
+
+        //
+
+
+
+        //Matrix a, b;
+
+        //cin >> a;
+        //cin >> b;
+
+        //cout << a;
+        //cout << endl << b;
+        //cout << endl;
 
 
         //Matrix c = a + 3;
-        cout << a - b;
-        cout << ~(a - b);
+        //cout << a - b;
+        //cout << ~(a - b);
         
 
         return 0;
