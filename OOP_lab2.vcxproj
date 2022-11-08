@@ -129,6 +129,9 @@
   <ItemGroup>
     <ClCompile Include="OOP_lab2.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\vcpkg\installed\x86-windows\include\matplotlibcpp.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

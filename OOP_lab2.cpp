@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-
+ 
 using namespace std;
 
 class Matrix {
@@ -61,7 +61,7 @@ public:
             }
         }
         return b;
-    } // ?????
+    }
 
     Matrix operator+(Matrix& a) {
 
@@ -89,7 +89,7 @@ public:
             }
         }
         return b;
-    } // ?????
+    }
 
     Matrix operator-(Matrix& a) {
 
@@ -130,7 +130,6 @@ public:
                 for (int k = 0; k < m; k++)
                 {
                     b.elements[i * a.m + j] += elements[m * i + k] * a.elements[j + k * a.m];
-                    //cout << "elements[a.m * i + k] " << elements[a.m * i + k] << " a.elements[j + k * a.m] " << a.elements[j + k * a.m] << endl;
                 }
             }
         }
@@ -154,8 +153,6 @@ public:
     friend void operator>>(istream& is, Matrix& a) {
 
         cout << "Enter size of the matrix:" << endl;
-        //is >> a.n;
-        //is >> a.m;
         cin >> a.n;
         cin >> a.m;
 
@@ -172,14 +169,12 @@ public:
             }
             
         }
-        //return is;
     }
 
     friend void operator<<(ostream & os, Matrix  a) {
 
         for (int i = 0; i < a.n; i++) {
             for (int j = 0; j < a.m; j++) {
-                //os << a.elements[i * a.n + a.m] << " ";
                 if (a.elements[i * a.m + j] < 10) {
                     cout << a.elements[i * a.m + j] << "  ";
                 }
@@ -189,9 +184,7 @@ public:
                 
             }
             cout << endl;
-            //os << endl;
         }
-        //return os;  /// ??
     }
 
     vector<float> operator[](int row) {
@@ -203,7 +196,6 @@ public:
         {
             nrow[i] = elements[row * m + i];
         }
-
         return nrow;
     }
 
@@ -262,7 +254,6 @@ Matrix REF(Matrix m) {
         }
 
         if (not m[i][i_max]) {
-
             return m; // вироджена матриц€ (singular matrix)
         }
 
@@ -280,16 +271,12 @@ Matrix REF(Matrix m) {
             for (int j = i + 1; j < m.m; j++)
             {
                 m.elements[k * m.m + j] = m[k][j] - m[i][j] * x;
-
             }
 
             // елементи п≥д головною д≥агоналлю заповнюЇмо нул€ми
             m.elements[k * m.m + i] = 0;
         }
-        //cout << m; //  test
     }
-    //cout << endl << m; // test
-
     return m;
 }
 
@@ -310,7 +297,6 @@ vector<float> calc_res(Matrix m) {
 
         res[i] /= m[i][i];
     }
-
     return res;
 }
 
@@ -356,7 +342,7 @@ vector<float> JacobiEigenvalueAlgorithm(Matrix A) { // m - симетрична матриц€ n*
 
             Matrix J = J.set_size(J, A.n, A.m);
 
-            // заповнюЇмо матриц€ обертанн€ (якоб≥)
+            // заповнюЇмо матрицю обертанн€ (якоб≥)
             for (int J_i = 0; J_i < J.n; J_i++)
             {
                 for (int J_j = 0; J_j < J.m; J_j++) {
@@ -400,22 +386,6 @@ vector<float> JacobiEigenvalueAlgorithm(Matrix A) { // m - симетрична матриц€ n*
     return res;
 
     }
-
-
-Matrix rand_sym_matr(int n) {
-
-    Matrix test_M = test_M.set_size(test_M, n, n);
-
-    srand(time(0));
-
-    for (int i = 0; i < test_M.n; i++) {
-        for (int j = i; j < test_M.m; j++) {
-            test_M.elements[i * test_M.m + j] = test_M.elements[j * test_M.m + i] = (float)rand()/1000;
-        }
-    }
-
-    return test_M;
-}
 
 
 // c. «находженн€ параметр≥в л≥н≥йноњ регрес≥йноњ модел≥ по заданим точкам
@@ -486,10 +456,46 @@ vector<float> LinearRegression(vector<float> x, vector<float> y) {
 }
 
 
+// функц≥њ дл€ тестуванн€
+
+Matrix rand_matr_Gaus(int n) {
+
+    Matrix m = m.set_size(m, n, n + 1);
+
+    srand(time(0));
+
+    for (int i = 0; i < m.elements.size(); i++)
+    {
+        m.elements[i] = rand() / 1000;
+    }
+
+    return m;
+}
+
+Matrix rand_sym_matr(int n) {
+
+    Matrix test_M = test_M.set_size(test_M, n, n);
+
+    srand(time(0));
+
+    for (int i = 0; i < test_M.n; i++) {
+        for (int j = i; j < test_M.m; j++) {
+            test_M.elements[i * test_M.m + j] = test_M.elements[j * test_M.m + i] = (float)rand() / 1000;
+        }
+    }
+
+    return test_M;
+}
+
 void test_Gaus() {
 
-    Matrix g = g.set_size(g, 3, 4);
-    g.elements = { 3, 2, -4, 3, 2, 3, 3, 15, 5, -3, 1, 14 };
+    //Matrix g = g.set_size(g, 3, 4);
+    //g.elements = { 3, 2, -4, 3, 2, 3, 3, 15, 5, -3, 1, 14 };
+
+    Matrix g = rand_matr_Gaus(4);
+
+    cout << g;
+    cout << endl;
 
     vector<float> test_gaus = GaussianElimination(g);
     for (int i = 0; i < g.n; i++)
@@ -559,26 +565,21 @@ void test_LinRegr() {
         cout << test1 * test2;
         cout << endl;
 
+       //Matrix a, b;
+
+       //cin >> a;
+       //cin >> b;
+
+       //cout << a;
+       //cout << endl << b;
+       //cout << endl << a - b;
+
+
         //test_Gaus();
 
         //test_Jacobi();
 
         //test_LinRegr();
-
-        //Matrix a, b;
-
-        //cin >> a;
-        //cin >> b;
-
-        //cout << a;
-        //cout << endl << b;
-        //cout << endl;
-
-
-        //Matrix c = a + 3;
-        //cout << a * b;
-        //cout << ~(a - b);
-        
 
         return 0;
     }
