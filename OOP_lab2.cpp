@@ -119,17 +119,18 @@ public:
         return b;
     }
 
-    Matrix operator*(Matrix& a) {
+    Matrix operator*(Matrix a) {
 
-        Matrix b = set_size(b, n, m);
+        Matrix b = set_size(b, n, a.m);
 
         for (int i = 0; i < n; i++)
         {
-            for (int j = 0; j < m; j++)
+            for (int j = 0; j < a.m; j++)
             {
-                for (int k = 0; k < n; k++)
+                for (int k = 0; k < m; k++)
                 {
-                    b.elements[i * m + j] += elements[n * i + k] * a.elements[j + k * m];
+                    b.elements[i * a.m + j] += elements[m * i + k] * a.elements[j + k * a.m];
+                    //cout << "elements[a.m * i + k] " << elements[a.m * i + k] << " a.elements[j + k * a.m] " << a.elements[j + k * a.m] << endl;
                 }
             }
         }
@@ -208,39 +209,38 @@ public:
 
     };
 
-    Matrix REF(Matrix m);
-
-    vector<float> calc_res(Matrix m);
-
-
 // a. метод Гауса розв’язання СЛАР
 
-    vector<float> GaussianElimination(Matrix m) { // m - розширена матриця n*n+1
+Matrix REF(Matrix m);
 
-        vector<float> res;
+vector<float> calc_res(Matrix m);
 
-        Matrix ref_mat = REF(m);
+vector<float> GaussianElimination(Matrix m) { // m - розширена матриця n*n+1
 
-        if (ref_mat == m) {
-            cout << "Matrix is singular";
-        }
-        else {
-            res = calc_res(ref_mat);
-        }
+    vector<float> res;
 
-        return res;
+    Matrix ref_mat = REF(m);
 
+    if (ref_mat == m) {
+        cout << "Matrix is singular";
+    }
+    else {
+        res = calc_res(ref_mat);
     }
 
-    void swap_rows(Matrix m, int i, int j) {
+    return res;
 
-        for (int k = 0; k < m.m; k++)
-        {
-            float cur = m[i][k];
-            m[i][k] = m[j][k];
-            m[j][k] = cur;
-        }
+}
+
+void swap_rows(Matrix m, int i, int j) {
+
+    for (int k = 0; k < m.m; k++)
+    {
+        float cur = m[i][k];
+        m[i][k] = m[j][k];
+        m[j][k] = cur;
     }
+}
 
 
 // зведення до рядкової ступінчастої форми (Row echelon form)
@@ -390,8 +390,6 @@ vector<float> JacobiEigenvalueAlgorithm(Matrix A) { // m - симетрична матриця n*
 
         }
 
-    cout << endl << A;
-
     vector<float> res;
     res.resize(A.n);
     for (int i = 0; i < A.n; i++)
@@ -420,6 +418,114 @@ Matrix rand_sym_matr(int n) {
 }
 
 
+// c. Знаходження параметрів лінійної регресійної моделі по заданим точкам
+
+Matrix set_x(vector<float> x) {
+
+    Matrix X = X.set_size(X, x.size(), 2);
+    for (int i = 0; i < X.n; i++)
+    {
+        X.elements[i * X.m] = 1;
+        X.elements[i * X.m + 1] = x[i];
+    }
+    return X;
+}
+
+Matrix set_y(vector<float> y) {
+
+    Matrix Y = Y.set_size(Y, y.size(), 1);
+    for (int i = 0; i < Y.n; i++)
+    {
+        Y.elements[i] = y[i];
+    }
+    return Y;
+}
+
+Matrix calc_inv_tXX(vector<float> x) {
+
+    int n = x.size();
+    float sum_xi = 0;
+    float sum_xixi = 0;
+
+    for (int i = 0; i < n; i++)
+    {
+        sum_xi += x[i];
+
+        sum_xixi += x[i] * x[i];
+    }
+
+    float SSx = 0;
+
+    for (int i = 0; i < n; i++)
+    {
+        SSx += (x[i] - sum_xi/n) * (x[i] - sum_xi/n);
+    }
+
+    float k = 1 / (n * SSx);
+
+    Matrix inv_tXX = inv_tXX.set_size(inv_tXX, 2, 2);
+
+    inv_tXX.elements[0] = sum_xixi;
+    inv_tXX.elements[1] = inv_tXX.elements[2] = -sum_xi;
+    inv_tXX.elements[3] = n;
+
+    return inv_tXX * k;
+}
+
+
+vector<float> LinearRegression(vector<float> x, vector<float> y) {
+
+    Matrix X = set_x(x);
+    Matrix Y = set_y(y);
+   
+    Matrix inv_tXX = calc_inv_tXX(x);
+
+    Matrix b = inv_tXX * ~X * Y;
+
+    return b.elements;
+}
+
+
+void test_Gaus() {
+
+    Matrix g = g.set_size(g, 3, 4);
+    g.elements = { 3, 2, -4, 3, 2, 3, 3, 15, 5, -3, 1, 14 };
+
+    vector<float> test_gaus = GaussianElimination(g);
+    for (int i = 0; i < g.n; i++)
+    {
+        cout << "x" << i << " = " << test_gaus[i] << endl;
+    }
+
+}
+
+void test_Jacobi() {
+
+    Matrix test_Jac = rand_sym_matr(3);
+    cout << test_Jac;
+    cout << endl;
+
+    vector<float> test_jac = JacobiEigenvalueAlgorithm(test_Jac);
+    for (int i = 0; i < test_Jac.n; i++)
+    {
+        cout << "e" << i << " = " << test_jac[i] << endl;
+    }
+
+}
+
+void test_LinRegr() {
+
+    //vector<float> x = { 2,1,3,4 };
+    //vector<float> y = { 1,2,5,5 };
+
+    vector<float> x = { 5,2,1,3,5 };
+    vector<float> y = { 1,3,4,5,2 };
+
+    vector<float> b = LinearRegression(x, y);
+
+    cout << "y = " << b[1] << "x + " << b[0] << endl;
+
+}
 
     int main()
     {
@@ -450,39 +556,14 @@ Matrix rand_sym_matr(int n) {
 
         ///////////////////
 
-        //cout << test1 * test2;
+        cout << test1 * test2;
+        cout << endl;
 
-        //test for GaussianElimination()
-        Matrix g = g.set_size(g, 3, 4);
-        g.elements = {3, 2, -4, 3, 2, 3, 3, 15, 5, -3, 1, 14};
+        //test_Gaus();
 
-        vector<float> test_gaus = GaussianElimination(g);
-        for (int i = 0; i < g.n; i++)
-        {
-            cout << "x" << i << " = " << test_gaus[i] << endl;
-        }
-        //
+        //test_Jacobi();
 
-
-        //test for JacobiEigenvalueAlgorithm()
-        Matrix a = a.set_size(a, 3, 3);
-        a.elements = { 7, 5, 2, 5, 1, 0, 2, 0, 3 };
-
-        float sq2 = sqrt(2);
-        //a.elements = { 1, sq2, 2, sq2, 3, sq2, 2, sq2, 1};
-
-        Matrix test_Jac = rand_sym_matr(3);
-        cout << test_Jac;
-
-        vector<float> test_jac = JacobiEigenvalueAlgorithm(test_Jac);
-        for (int i = 0; i < a.n; i++)
-        {
-            cout << "e" << i << " = " << test_jac[i] << endl;
-        }
-
-        //
-
-
+        //test_LinRegr();
 
         //Matrix a, b;
 
@@ -495,7 +576,7 @@ Matrix rand_sym_matr(int n) {
 
 
         //Matrix c = a + 3;
-        //cout << a - b;
+        //cout << a * b;
         //cout << ~(a - b);
         
 
